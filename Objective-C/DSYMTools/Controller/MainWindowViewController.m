@@ -145,9 +145,12 @@
     NSString *commandString = [NSString stringWithFormat:@"dwarfdump --uuid \"%@\"",archiveInfo.dSYMFilePath];
     NSString *uuidsString = [self runCommand:commandString];
     NSArray *uuids = [uuidsString componentsSeparatedByString:@"\n"];
-
+    
     NSMutableArray *uuidInfos = [NSMutableArray arrayWithCapacity:1];
-    for(NSString *uuidString in uuids){
+    for(NSString *uuid in uuids){
+        NSString *uuidString = [uuid copy];
+        NSString *executableFilePath = [[uuidString componentsSeparatedByString:@" "] lastObject];
+        uuidString = [uuidString stringByReplacingOccurrencesOfString:executableFilePath withString:@""];
         NSArray* match = [reg matchesInString:uuidString options:NSMatchingReportCompletion range:NSMakeRange(0, [uuidString length])];
         if (match.count == 0) {
             continue;
@@ -157,7 +160,7 @@
             UUIDInfo *uuidInfo = [[UUIDInfo alloc] init];
             uuidInfo.arch = [uuidString substringWithRange:range];
             uuidInfo.uuid = [uuidString substringWithRange:NSMakeRange(6, range.location-6-2)];
-            uuidInfo.executableFilePath = [uuidString substringWithRange:NSMakeRange(range.location+range.length+2, [uuidString length]-(range.location+range.length+2))];
+            uuidInfo.executableFilePath = executableFilePath;
             [uuidInfos addObject:uuidInfo];
         }
         archiveInfo.uuidInfos = uuidInfos;
